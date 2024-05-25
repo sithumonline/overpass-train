@@ -54,8 +54,8 @@ out skel qt;
 
         var opl = new L.OverPassLayer({
             'query': 'area["name"="Sri Lanka"]->.searchArea;(node["railway"="station"](area.searchArea);way["railway"="station"](area.searchArea);way["railway"="rail"](area.searchArea);node(w););out body;>;out skel qt;',
-            'onSuccess': function(data) {
-               // console.log('Data loaded:', data);
+            'onSuccess': function (data) {
+                // console.log('Data loaded:', data);
             },
         });
         mymap.addLayer(opl);
@@ -63,6 +63,14 @@ out skel qt;
         // Coordinates for the train location
         var trainLat = 6.9271; // Example latitude
         var trainLon = 79.8612; // Example longitude
+
+        navigator.geolocation.getCurrentPosition(function (position) {
+            if (!position.coords.latitude && !position.coords.longitude) {
+                return;
+            }
+            trainLat = position.coords.latitude;
+            trainLon = position.coords.longitude;
+        });
 
         // Define a custom icon
         var trainIcon = L.icon({
