@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Train Marker on Map</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        #mapid {
+            height: 600px;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="mapid"></div>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-overpass-layer@2.9.0/dist/OverPassLayer.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-overpass-layer@2.9.0/src/OverPassLayer.min.css">
+
+    <!-- 
+[out:json][timeout:25];
+area["name"="Sri Lanka"]->.searchArea;
+(
+    // Fetch nodes and ways tagged as railway stations
+    node["railway"="station"](area.searchArea);
+    way["railway"="station"](area.searchArea);
+
+    // Fetch ways tagged as railway tracks
+    way["railway"="rail"](area.searchArea);
+    node(w);
+);
+out body;
+>;
+out skel qt;
+
+
+[out:json][timeout:25];area["name"="Sri Lanka"]->.searchArea;(node["railway"="station"](area.searchArea);way["railway"="station"](area.searchArea);way["railway"="rail"](area.searchArea);node(w););out body;>;out skel qt;
+
+-->
+
+
+    <script>
+        // Initialize the map and set its view to the given location and zoom level
+        var mymap = L.map('mapid').setView([7.8731, 80.7718], 8); // Coordinates for Sri Lanka
+
+        // Add OpenStreetMap tile layer
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(mymap);
+
+        var opl = new L.OverPassLayer({
+            'query': 'area["name"="Sri Lanka"]->.searchArea;(node["railway"="station"](area.searchArea);way["railway"="station"](area.searchArea);way["railway"="rail"](area.searchArea);node(w););out body;>;out skel qt;',
+            'onSuccess': function(data) {
+               // console.log('Data loaded:', data);
+            },
+        });
+        mymap.addLayer(opl);
+
+        // Coordinates for the train location
+        var trainLat = 6.9271; // Example latitude
+        var trainLon = 79.8612; // Example longitude
+
+        // Define a custom icon
+        var trainIcon = L.icon({
+            iconUrl: 'train.png', // URL to the train icon image
+            iconSize: [32, 37], // size of the icon
+            iconAnchor: [16, 37], // point of the icon which will correspond to marker's location
+            popupAnchor: [0, -28] // point from which the popup should open relative to the iconAnchor
+        });
+
+        // Add a marker with the custom icon
+        var trainMarker = L.marker([trainLat, trainLon], { icon: trainIcon }).addTo(mymap);
+
+        // Optionally, add a popup to the marker
+        trainMarker.bindPopup("<b>Train Location</b><br>Latitude: " + trainLat + "<br>Longitude: " + trainLon).openPopup();
+    </script>
+</body>
+
+</html>
