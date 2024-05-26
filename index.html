@@ -46,99 +46,165 @@ out skel qt;
 -->
 
 
-<script>
-    let mymap;
-    let userTrainLat = null;
-    let userTrainLon = null;
-    let trainLat = 6.9271; // Example latitude
-    let trainLon = 79.8612; // Example longitude
+    <script>
+        let mymap;
+        let userTrainLat = null;
+        let userTrainLon = null;
+        let trainLat = 6.9271; // Example latitude
+        let trainLon = 79.8612; // Example longitude
+        let _data = null;
 
-    function initializeMap(lat, lon, zoom) {
-        mymap = L.map('mapid').setView([lat, lon], zoom);
+        function initializeMap(lat, lon, zoom) {
+            mymap = L.map('mapid').setView([lat, lon], zoom);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            maxZoom: 19,
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-        }).addTo(mymap);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(mymap);
 
-        let opl = new L.OverPassLayer({
-            'query': 'area["name"="Sri Lanka"]->.searchArea;(node["railway"="station"](area.searchArea);way["railway"="station"](area.searchArea);way["railway"="rail"](area.searchArea);node(w););out body;>;out skel qt;',
-            'onSuccess': function (data) {
-                // console.log('Data loaded:', data);
-            },
-        });
-        mymap.addLayer(opl);
-    }
-
-    function getUserLocation() {
-        navigator.geolocation.getCurrentPosition(function (position) {
-            userTrainLat = position.coords.latitude;
-            userTrainLon = position.coords.longitude;
-            console.log(`Latitude: ${userTrainLat} Longitude: ${userTrainLon}`)
-        }, function (error) {
-            userTrainLat = 6.7478626;
-            userTrainLon = 79.9033469;
-            console.error('Error getting geolocation:', error);
-        });
-    }
-
-    function createTrainMarker(lat, lon) {
-        let trainIcon = L.icon({
-            iconUrl: 'train.png', // URL to the train icon image
-            iconSize: [32, 37], // size of the icon
-            iconAnchor: [16, 37], // point of the icon which will correspond to marker's location
-            popupAnchor: [0, -28] // point from which the popup should open relative to the iconAnchor
-        });
-
-        let trainMarker = L.marker([lat, lon], { icon: trainIcon }).addTo(mymap);
-        trainMarker.bindPopup(`<b>Train Location</b><br>Latitude: ${lat}<br>Longitude: ${lon}`).openPopup();
-
-        return trainMarker;
-    }
-
-    function createRoutingControl(userLat, userLon, trainLat, trainLon, trainMarker) {
-        L.Routing.control({
-            waypoints: [
-                L.latLng(userLat, userLon),
-                L.latLng(trainLat, trainLon)
-            ]
-        })
-            .on('routesfound', function (e) {
-                let routes = e.routes;
-                let firstRoute = routes[0];
-                firstRoute.coordinates.forEach(function (coordinate, index) {
-                    setTimeout(function () {
-                        trainLat = coordinate.lat;
-                        trainLon = coordinate.lng;
-                        trainMarker.bindPopup(`<b>Train Location</b><br>Latitude: ${trainLat}<br>Longitude: ${trainLon}`).openPopup();
-                        trainMarker.setLatLng(coordinate);
-                    }, 1000 * index);
-                });
-            })
-            .addTo(mymap);
-    }
-
-    function waitForUserLocation() {
-        if (userTrainLat != null && userTrainLon != null) {
-            console.log('User location is available');
-            let trainMarker = createTrainMarker(userTrainLat, userTrainLon);
-            createRoutingControl(userTrainLat, userTrainLon, trainLat, trainLon, trainMarker);
-            console.log('User trip is over');
-        } else {
-            console.log('Waiting for user location...');
-            setTimeout(waitForUserLocation, 1000);
+            let opl = new L.OverPassLayer({
+                'query': 'area["name"="Sri Lanka"]->.searchArea;(node["railway"="station"](area.searchArea);way["railway"="station"](area.searchArea);way["railway"="rail"](area.searchArea);node(w););out body;>;out skel qt;',
+                'onSuccess': function (data) {
+                    console.log('Data loaded:');//, data);
+                    _data = data;
+                },
+            });
+            mymap.addLayer(opl);
         }
-    }
 
-    // Initialize the map
-    initializeMap(7.8731, 80.7718, 8); // Coordinates for Sri Lanka
+        function getUserLocation() {
+            navigator.geolocation.getCurrentPosition(function (position) {
+                userTrainLat = position.coords.latitude;
+                userTrainLon = position.coords.longitude;
+                console.log(`Latitude: ${userTrainLat} Longitude: ${userTrainLon}`)
+            }, function (error) {
+                userTrainLat = 6.7478626;
+                userTrainLon = 79.9033469;
+                console.error('Error getting geolocation:', error);
+            });
+        }
 
-    // Get user location
-    getUserLocation();
+        function createTrainMarker(lat, lon) {
+            let trainIcon = L.icon({
+                iconUrl: 'train.png', // URL to the train icon image
+                iconSize: [32, 37], // size of the icon
+                iconAnchor: [16, 37], // point of the icon which will correspond to marker's location
+                popupAnchor: [0, -28] // point from which the popup should open relative to the iconAnchor
+            });
 
-    // Start waiting for user location
-    waitForUserLocation();
-</script>
+            let trainMarker = L.marker([lat, lon], { icon: trainIcon }).addTo(mymap);
+            trainMarker.bindPopup(`<b>Train Location</b><br>Latitude: ${lat}<br>Longitude: ${lon}`).openPopup();
+
+            return trainMarker;
+        }
+
+        function createRoutingControl(userLat, userLon, trainLat, trainLon, trainMarker) {
+            L.Routing.control({
+                waypoints: [
+                    L.latLng(userLat, userLon),
+                    L.latLng(trainLat, trainLon)
+                ]
+            })
+                .on('routesfound', function (e) {
+                    let routes = e.routes;
+                    let firstRoute = routes[0];
+                    firstRoute.coordinates.forEach(function (coordinate, index) {
+                        setTimeout(function () {
+                            trainLat = coordinate.lat;
+                            trainLon = coordinate.lng;
+                            trainMarker.bindPopup(`<b>Train Location</b><br>Latitude: ${trainLat}<br>Longitude: ${trainLon}`).openPopup();
+                            trainMarker.setLatLng(coordinate);
+
+                            // check data is available, if available check current location is near to any railway station or railway track
+                            if (_data != null) {
+                                console.log('Data:', "Data is available");
+                                let nearestStation = null;
+                                let nearestDistance = Number.MAX_VALUE;
+                                let distanceFromRailwayTrack = Number.MAX_VALUE;
+                                let nearestRailwayTrack = null;
+                                _data.elements.forEach(function (element) {
+                                    if (!element.tags) {
+                                        return
+                                    }
+                                    // console.log('Element:', element)
+                                    if (element.type == 'node' && element.tags.railway == 'station') {
+                                        // console.log('Station:', element);
+                                        let stationLat = element.lat;
+                                        let stationLon = element.lon;
+                                        let distance = Math.sqrt(Math.pow(stationLat - trainLat, 2) + Math.pow(stationLon - trainLon, 2));
+                                        if (distance < nearestDistance) {
+                                            nearestDistance = distance;
+                                            nearestStation = element;
+                                        }
+                                    } else if (element.type == 'way') {
+                                        // console.log('Railway Track:', element);
+                                        let railwayTrack = element;
+                                        let distance = Number.MAX_VALUE;
+                                        for (let i = 0; i < railwayTrack.nodes.length - 1; i++) {
+                                            let node1 = railwayTrack.nodes[i];
+                                            let node2 = railwayTrack.nodes[i + 1];
+                                            let lat1 = _data.elements.find(e => e.id == node1)?.lat;
+                                            let lon1 = _data.elements.find(e => e.id == node1)?.lon;
+                                            let lat2 = _data.elements.find(e => e.id == node2)?.lat;
+                                            let lon2 = _data.elements.find(e => e.id == node2)?.lon;
+                                            if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
+                                                continue;
+                                            }
+                                            let x0 = trainLon;
+                                            let y0 = trainLat;
+                                            let x1 = lon1;
+                                            let y1 = lat1;
+                                            let x2 = lon2;
+                                            let y2 = lat2;
+                                            let distanceFromLine = Math.abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1) / Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
+                                            if (distanceFromLine < distance) {
+                                                distance = distanceFromLine;
+                                            }
+                                        }
+                                        if (distance < distanceFromRailwayTrack) {
+                                            distanceFromRailwayTrack = distance;
+                                            nearestRailwayTrack = element;
+                                        }
+                                    }
+
+                                    // add popup to the nearest station and railway track
+                                    if (nearestStation != null) {
+                                        trainMarker.bindPopup(`<b>Train Location</b><br>Latitude: ${trainLat}<br>Longitude: ${trainLon}<br>Nearest Station: ${nearestStation.tags?.name}`).openPopup();
+                                        // console.log('Nearest Station:', nearestStation);
+                                    }
+                                    if (nearestRailwayTrack != null) {
+                                        trainMarker.bindPopup(`<b>Train Location</b><br>Latitude: ${trainLat}<br>Longitude: ${trainLon}<br>Nearest Railway Track: ${nearestRailwayTrack.tags?.name}`).openPopup();
+                                        // console.log('Nearest Railway Track:', nearestRailwayTrack);
+                                    }
+                                });
+                            }
+                        }, 10000 * index);
+                    });
+                })
+                .addTo(mymap);
+        }
+
+        function waitForUserLocation() {
+            if (userTrainLat != null && userTrainLon != null) {
+                console.log('User location is available');
+                let trainMarker = createTrainMarker(userTrainLat, userTrainLon);
+                createRoutingControl(userTrainLat, userTrainLon, trainLat, trainLon, trainMarker);
+                console.log('User trip is over');
+            } else {
+                console.log('Waiting for user location...');
+                setTimeout(waitForUserLocation, 1000);
+            }
+        }
+
+        // Initialize the map
+        initializeMap(7.8731, 80.7718, 8); // Coordinates for Sri Lanka
+
+        // Get user location
+        getUserLocation();
+
+        // Start waiting for user location
+        waitForUserLocation();
+    </script>
 </body>
 
 </html>
