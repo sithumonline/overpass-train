@@ -20,6 +20,9 @@
     <script src="https://cdn.jsdelivr.net/npm/leaflet-overpass-layer@2.9.0/dist/OverPassLayer.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-overpass-layer@2.9.0/src/OverPassLayer.min.css">
 
+    <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+
     <!--
 
 [out:json][timeout:25];
@@ -65,10 +68,13 @@ out skel qt;
         var trainLat = 6.9271; // Example latitude
         var trainLon = 79.8612; // Example longitude
 
+        var userTrainLat = null;
+        var userTrainLon = null;
+
         navigator.geolocation.getCurrentPosition(function (position) {
-            trainLat = position.coords.latitude;
-            trainLon = position.coords.longitude;
-            console.log('Latitude: ' + position.coords.latitude + ' Longitude: ' + position.coords.longitude)
+            userTrainLat = position.coords.latitude;
+            userTrainLon = position.coords.longitude;
+            console.log('Latitude: ' + userTrainLat + ' Longitude: ' + userTrainLon)
         }, function (error) {
             console.error('Error getting geolocation:', error);
         });
@@ -86,6 +92,31 @@ out skel qt;
 
         // Optionally, add a popup to the marker
         trainMarker.bindPopup("<b>Train Location</b><br>Latitude: " + trainLat + "<br>Longitude: " + trainLon).openPopup();
+
+        // if (userTrainLat != null && userTrainLon != null) {
+        L.Routing.control({
+            waypoints: [
+                // L.latLng(userTrainLat, userTrainLon),
+                L.latLng(6.7478626, 79.9033469),
+                L.latLng(trainLat, trainLon)
+            ]
+        })
+            .on('routesfound', function (e) {
+                var routes = e.routes;
+                var firstRoute = routes[0];
+                // var summary = firstRoute.summary;
+                firstRoute.coordinates.forEach(function (coordinate, index) {
+                    // console.log('Coordinate_:', coordinate, ' Index:', index);
+                    setTimeout(function () {
+                        trainLat = coordinate.lat;
+                        trainLon = coordinate.lng;
+                        trainMarker.bindPopup("<b>Train Location</b><br>Latitude: " + trainLat + "<br>Longitude: " + trainLon).openPopup();
+                        trainMarker.setLatLng(coordinate);
+                    }, 1000 * index);
+                });
+            })
+            .addTo(mymap);
+        // }
     </script>
 </body>
 
