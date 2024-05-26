@@ -46,78 +46,99 @@ out skel qt;
 -->
 
 
-    <script>
-        // Initialize the map and set its view to the given location and zoom level
-        var mymap = L.map('mapid').setView([7.8731, 80.7718], 8); // Coordinates for Sri Lanka
+<script>
+    let mymap;
+    let userTrainLat = null;
+    let userTrainLon = null;
+    let trainLat = 6.9271; // Example latitude
+    let trainLon = 79.8612; // Example longitude
 
-        // Add OpenStreetMap tile layer
+    function initializeMap(lat, lon, zoom) {
+        mymap = L.map('mapid').setView([lat, lon], zoom);
+
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             maxZoom: 19,
             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(mymap);
 
-        var opl = new L.OverPassLayer({
+        let opl = new L.OverPassLayer({
             'query': 'area["name"="Sri Lanka"]->.searchArea;(node["railway"="station"](area.searchArea);way["railway"="station"](area.searchArea);way["railway"="rail"](area.searchArea);node(w););out body;>;out skel qt;',
             'onSuccess': function (data) {
                 // console.log('Data loaded:', data);
             },
         });
         mymap.addLayer(opl);
+    }
 
-        // Coordinates for the train location
-        var trainLat = 6.9271; // Example latitude
-        var trainLon = 79.8612; // Example longitude
-
-        var userTrainLat = null;
-        var userTrainLon = null;
-
+    function getUserLocation() {
         navigator.geolocation.getCurrentPosition(function (position) {
             userTrainLat = position.coords.latitude;
             userTrainLon = position.coords.longitude;
-            console.log('Latitude: ' + userTrainLat + ' Longitude: ' + userTrainLon)
+            console.log(`Latitude: ${userTrainLat} Longitude: ${userTrainLon}`)
         }, function (error) {
+            userTrainLat = 6.7478626;
+            userTrainLon = 79.9033469;
             console.error('Error getting geolocation:', error);
         });
+    }
 
-        // Define a custom icon
-        var trainIcon = L.icon({
+    function createTrainMarker(lat, lon) {
+        let trainIcon = L.icon({
             iconUrl: 'train.png', // URL to the train icon image
             iconSize: [32, 37], // size of the icon
             iconAnchor: [16, 37], // point of the icon which will correspond to marker's location
             popupAnchor: [0, -28] // point from which the popup should open relative to the iconAnchor
         });
 
-        // Add a marker with the custom icon
-        var trainMarker = L.marker([trainLat, trainLon], { icon: trainIcon }).addTo(mymap);
+        let trainMarker = L.marker([lat, lon], { icon: trainIcon }).addTo(mymap);
+        trainMarker.bindPopup(`<b>Train Location</b><br>Latitude: ${lat}<br>Longitude: ${lon}`).openPopup();
 
-        // Optionally, add a popup to the marker
-        trainMarker.bindPopup("<b>Train Location</b><br>Latitude: " + trainLat + "<br>Longitude: " + trainLon).openPopup();
+        return trainMarker;
+    }
 
-        // if (userTrainLat != null && userTrainLon != null) {
+    function createRoutingControl(userLat, userLon, trainLat, trainLon, trainMarker) {
         L.Routing.control({
             waypoints: [
-                // L.latLng(userTrainLat, userTrainLon),
-                L.latLng(6.7478626, 79.9033469),
+                L.latLng(userLat, userLon),
                 L.latLng(trainLat, trainLon)
             ]
         })
             .on('routesfound', function (e) {
-                var routes = e.routes;
-                var firstRoute = routes[0];
-                // var summary = firstRoute.summary;
+                let routes = e.routes;
+                let firstRoute = routes[0];
                 firstRoute.coordinates.forEach(function (coordinate, index) {
-                    // console.log('Coordinate_:', coordinate, ' Index:', index);
                     setTimeout(function () {
                         trainLat = coordinate.lat;
                         trainLon = coordinate.lng;
-                        trainMarker.bindPopup("<b>Train Location</b><br>Latitude: " + trainLat + "<br>Longitude: " + trainLon).openPopup();
+                        trainMarker.bindPopup(`<b>Train Location</b><br>Latitude: ${trainLat}<br>Longitude: ${trainLon}`).openPopup();
                         trainMarker.setLatLng(coordinate);
                     }, 1000 * index);
                 });
             })
             .addTo(mymap);
-        // }
-    </script>
+    }
+
+    function waitForUserLocation() {
+        if (userTrainLat != null && userTrainLon != null) {
+            console.log('User location is available');
+            let trainMarker = createTrainMarker(userTrainLat, userTrainLon);
+            createRoutingControl(userTrainLat, userTrainLon, trainLat, trainLon, trainMarker);
+            console.log('User trip is over');
+        } else {
+            console.log('Waiting for user location...');
+            setTimeout(waitForUserLocation, 1000);
+        }
+    }
+
+    // Initialize the map
+    initializeMap(7.8731, 80.7718, 8); // Coordinates for Sri Lanka
+
+    // Get user location
+    getUserLocation();
+
+    // Start waiting for user location
+    waitForUserLocation();
+</script>
 </body>
 
 </html>
