@@ -20,7 +20,7 @@
     <script src="https://cdn.jsdelivr.net/npm/leaflet-overpass-layer@2.9.0/dist/OverPassLayer.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-overpass-layer@2.9.0/src/OverPassLayer.min.css">
 
-<!--
+    <!--
 
 [out:json][timeout:25];
 area["name"="Sri Lanka"]->.searchArea;
@@ -66,11 +66,11 @@ out skel qt;
         var trainLon = 79.8612; // Example longitude
 
         navigator.geolocation.getCurrentPosition(function (position) {
-            if (!position.coords.latitude && !position.coords.longitude) {
-                return;
-            }
             trainLat = position.coords.latitude;
             trainLon = position.coords.longitude;
+            console.log('Latitude: ' + position.coords.latitude + ' Longitude: ' + position.coords.longitude)
+        }, function (error) {
+            console.error('Error getting geolocation:', error);
         });
 
         // Define a custom icon
