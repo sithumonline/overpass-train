@@ -167,15 +167,20 @@ out skel qt;
                                         }
                                     }
 
+                                    let txt = `<b>Train Location</b><br>Latitude: ${trainLat}<br>Longitude: ${trainLon}<br>`;
+
                                     // add popup to the nearest station and railway track
                                     if (nearestStation != null) {
-                                        trainMarker.bindPopup(`<b>Train Location</b><br>Latitude: ${trainLat}<br>Longitude: ${trainLon}<br>Nearest Station: ${nearestStation.tags?.name}`).openPopup();
                                         // console.log('Nearest Station:', nearestStation);
+                                        txt += `Nearest Station: ${nearestStation.tags?.name}`;
                                     }
                                     if (nearestRailwayTrack != null) {
-                                        trainMarker.bindPopup(`<b>Train Location</b><br>Latitude: ${trainLat}<br>Longitude: ${trainLon}<br>Nearest Railway Track: ${nearestRailwayTrack.tags?.name}`).openPopup();
                                         // console.log('Nearest Railway Track:', nearestRailwayTrack);
+                                        txt += nearestStation ? `<br>` : '';
+                                        txt += `Nearest Railway Track: ${nearestRailwayTrack.tags?.name}`;
                                     }
+
+                                    trainMarker.bindPopup(txt).openPopup();
                                 });
                             }
                         }, 10000 * index);
