@@ -126,9 +126,7 @@ out skel qt;
                                     if (!element.tags) {
                                         return
                                     }
-                                    // console.log('Element:', element)
                                     if (element.type == 'node' && element.tags.railway == 'station') {
-                                        // console.log('Station:', element);
                                         let stationLat = element.lat;
                                         let stationLon = element.lon;
                                         let distance = Math.sqrt(Math.pow(stationLat - trainLat, 2) + Math.pow(stationLon - trainLon, 2));
@@ -137,7 +135,6 @@ out skel qt;
                                             nearestStation = element;
                                         }
                                     } else if (element.type == 'way') {
-                                        // console.log('Railway Track:', element);
                                         let railwayTrack = element;
                                         let distance = Number.MAX_VALUE;
                                         for (let i = 0; i < railwayTrack.nodes.length - 1; i++) {
@@ -169,15 +166,12 @@ out skel qt;
 
                                     let txt = `<b>Train Location</b><br>Latitude: ${trainLat}<br>Longitude: ${trainLon}<br>`;
 
-                                    // add popup to the nearest station and railway track
                                     if (nearestStation != null) {
-                                        // console.log('Nearest Station:', nearestStation);
-                                        txt += `Nearest Station: ${nearestStation.tags?.name}`;
+                                        txt += nearestStation.tags?.name ? `Nearest Station: ${nearestStation.tags?.name}` : ``;
                                     }
                                     if (nearestRailwayTrack != null) {
-                                        // console.log('Nearest Railway Track:', nearestRailwayTrack);
-                                        txt += nearestStation ? `<br>` : '';
-                                        txt += `Nearest Railway Track: ${nearestRailwayTrack.tags?.name}`;
+                                        txt += nearestStation && nearestRailwayTrack.tags?.name ? `<br>` : '';
+                                        txt += nearestRailwayTrack.tags?.name ? `Nearest Railway Track: ${nearestRailwayTrack.tags?.name}` : ``;
                                     }
 
                                     trainMarker.bindPopup(txt).openPopup();
