@@ -12,6 +12,8 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
-    "haversine-distance": "^1.2.1"
+    "geokdbush-tk": "^2.0.4",
+    "haversine-distance": "^1.2.1",
+    "kdbush": "^4.0.2"
   }
 }

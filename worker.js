@@ -1,4 +1,6 @@
 import haversine from "haversine-distance";
+import kdbush from "kdbush";
+import * as geokdbush from "geokdbush-tk";
 
 self.onmessage = async function (event) {
   let _data = event.data.data;
@@ -18,6 +20,16 @@ self.onmessage = async function (event) {
       };
     });
 
+  const _index = new kdbush(
+    railwayTracks.flatMap((track) => track.nodes).length
+  );
+
+  railwayTracks.forEach((track) => {
+    track.nodes.forEach((node) => {
+      _index.add(node.lon, node.lat);
+    });
+  });
+
   console.log("worker started", firstRoute.coordinates.length);
 
   for (let index = 0; index < firstRoute.coordinates.length; index++) {
@@ -30,10 +42,28 @@ self.onmessage = async function (event) {
       `${firstRoute.coordinates.length} / ${index}`
     );
 
+    const nearestIds = geokdbush.around(_index, trainLat, trainLon, 1);
+    const nearestPoints = nearestIds.map(
+      (id) => railwayTracks.flatMap((track) => track.nodes)[id]
+    );
+    const nearTrack = railwayTracks.find((track) =>
+      track.nodes.some((node) => nearestPoints.includes(node))
+    );
+    const nearDistance = findNearestDistance(nearTrack, trainLat, trainLon);
+
     let nearestRailwayTrack = findNearestRailwayTrack(
       railwayTracks,
       trainLat,
       trainLon
+    );
+
+    console.log(
+      "nearestRailwayTrack",
+      nearestRailwayTrack,
+      "nearTrack",
+      nearTrack,
+      "nearDistance",
+      nearDistance
     );
 
     let txt = `<b>Train Location</b><br>Latitude: ${trainLat}<br>Longitude: ${trainLon}<br>Distance : ${nearestRailwayTrack.distance.toFixed(
