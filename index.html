@@ -71,7 +71,7 @@ out skel qt;
 -->
 
 
-    <script>
+    <script type="module">
         let mymap;
         let userTrainLat = null;
         let userTrainLon = null;
@@ -152,7 +152,7 @@ out skel qt;
 
         function processWithWorker(firstRoute) {
             if (window.Worker) {
-                const myWorker = new Worker("worker.js");
+                const myWorker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
                 myWorker.onmessage = (e) => handleWorkerMessage(e, firstRoute);
                 myWorker.postMessage({ data: _data, firstRoute });
             } else {

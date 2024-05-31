@@ -1,3 +1,5 @@
+import haversine from "haversine-distance";
+
 self.onmessage = async function (event) {
   let _data = event.data.data;
   let firstRoute = event.data.firstRoute;
@@ -11,8 +13,8 @@ self.onmessage = async function (event) {
       return {
         ...element,
         nodes: element.nodes.map((node) =>
-        _data.elements.find((e) => e.id === node)
-      ),
+          _data.elements.find((e) => e.id === node)
+        ),
       };
     });
 
@@ -76,6 +78,15 @@ function findNearestDistance(railwayTrack, trainLat, trainLon) {
   let distance = Number.MAX_VALUE;
 
   for (let i = 0; i < railwayTrack.nodes.length - 1; i++) {
+    // rewrite with haversine
+    /*
+      steps:
+      1. get the distance between train and node1
+      2. get the distance between train and node2
+      3. get the distance between node1 and node2
+      4. calculate the distance between train and line
+    */
+
     let node1 = railwayTrack.nodes[i];
     let node2 = railwayTrack.nodes[i + 1];
     let lat1 = node1.lat;
@@ -85,15 +96,30 @@ function findNearestDistance(railwayTrack, trainLat, trainLon) {
     if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) {
       continue;
     }
-    let x0 = trainLon;
-    let y0 = trainLat;
-    let x1 = lon1;
-    let y1 = lat1;
-    let x2 = lon2;
-    let y2 = lat2;
-    let distanceFromLine =
-      Math.abs((y2 - y1) * x0 - (x2 - x1) * y0 + x2 * y1 - y2 * x1) /
-      Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
+
+    let distance1 = haversine(
+      { lat: trainLat, lon: trainLon },
+      { lat: lat1, lon: lon1 }
+    );
+    let distance2 = haversine(
+      { lat: trainLat, lon: trainLon },
+      { lat: lat2, lon: lon2 }
+    );
+    let distance3 = haversine(
+      { lat: lat1, lon: lon1 },
+      { lat: lat2, lon: lon2 }
+    );
+    let distanceFromLine = 0;
+    if (distance1 <= distance3 && distance2 <= distance3) {
+      let s = (distance1 + distance2 + distance3) / 2;
+      distanceFromLine =
+        (2 *
+          Math.sqrt(s * (s - distance1) * (s - distance2) * (s - distance3))) /
+        distance3;
+    } else {
+      distanceFromLine = Math.min(distance1, distance2);
+    }
+
     if (distanceFromLine < distance) {
       distance = distanceFromLine;
     }
