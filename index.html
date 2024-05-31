@@ -43,6 +43,31 @@ out skel qt;
 
 [out:json][timeout:25];area["name"="Sri Lanka"]->.searchArea;(node["railway"="station"](area.searchArea);way["railway"="station"](area.searchArea);way["railway"="rail"](area.searchArea);node(w););out body;>;out skel qt;
 
+
+[out:json][timeout:25];
+// Define the location with given coordinates
+is_in({{userTrainLat}}, {{userTrainLon}})->.n;
+
+// Fetch the administrative boundaries containing the node with admin_level 5
+rel(pivot.n)["boundary"="administrative"]["admin_level"="5"];
+map_to_area->.adminArea;
+
+(
+// Fetch nodes and ways tagged as railway stations within the administrative area
+node["railway"="station"](area.adminArea);
+way["railway"="station"](area.adminArea);
+
+// Fetch ways tagged as railway tracks within the administrative area
+way["railway"="rail"](area.adminArea);
+node(w);
+);
+out body;
+>;
+out skel qt;
+
+
+[out:json][timeout:25];is_in(6.9271, 79.8612)->.n;rel(pivot.n)["boundary"="administrative"]["admin_level"="5"];map_to_area->.adminArea;(node["railway"="station"](area.adminArea);way["railway"="station"](area.adminArea);way["railway"="rail"](area.adminArea);node(w););out body;>;out skel qt;
+
 -->
 
 
@@ -53,8 +78,7 @@ out skel qt;
         let trainLat = 6.9271; // Example latitude
         let trainLon = 79.8612; // Example longitude
         let _data = null;
-        let txtCoor = [];
-        let setTxtCoor = false;
+        let trainMarker = null;
 
         function initializeMap(lat, lon, zoom) {
             mymap = L.map('mapid').setView([lat, lon], zoom);
@@ -65,7 +89,7 @@ out skel qt;
             }).addTo(mymap);
 
             let opl = new L.OverPassLayer({
-                'query': 'area["name"="Sri Lanka"]->.searchArea;(node["railway"="station"](area.searchArea);way["railway"="station"](area.searchArea);way["railway"="rail"](area.searchArea);node(w););out body;>;out skel qt;',
+                'query': `is_in(${userTrainLat}, ${userTrainLon})->.n;rel(pivot.n)["boundary"="administrative"]["admin_level"="5"];map_to_area->.adminArea;(node["railway"="station"](area.adminArea);way["railway"="station"](area.adminArea);way["railway"="rail"](area.adminArea);node(w););out body;>;out skel qt;`,
                 'onSuccess': function (data) {
                     console.log('Data loaded:');//, data);
                     _data = data;
@@ -100,62 +124,71 @@ out skel qt;
             return trainMarker;
         }
 
-        function createRoutingControl(userLat, userLon, trainLat, trainLon, trainMarker) {
+        function createRoutingControl(userLat, userLon, trainLat, trainLon) {
             L.Routing.control({
                 waypoints: [
                     L.latLng(userLat, userLon),
                     L.latLng(trainLat, trainLon)
                 ]
             })
-                .on('routesfound', function (e) {
-                    let routes = e.routes;
-                    let firstRoute = routes[0];
-
-                    // check data is available, if available check current location is near to any railway station or railway track
-                    if (_data != null && txtCoor.length == 0) {
-                        console.log('Data:', "Data is available");
-
-                        if (window.Worker) {
-                            const myWorker = new Worker("worker.js");
-
-                            myWorker.onmessage = function (e) {
-                                console.log('Message received from worker', e.data);
-                                txtCoor = e.data;
-                                setTxtCoor = true;
-                            }
-
-                            // Send data to the worker
-                            myWorker.postMessage({ data: _data, firstRoute });
-                        } else {
-                            console.log('Your browser doesn\'t support web workers.');
-                        }
-                    }
-                    if (setTxtCoor) {
-                        txtCoor.forEach(function (coordinate, index) {
-                            setTimeout(function () {
-                                trainMarker.bindPopup(coordinate.txt).openPopup();
-                                trainMarker.setLatLng([coordinate.latLng.lat, coordinate.latLng.lng]);
-                            }, 10000 * index);
-                        });
-                    }
-                })
+                .on('routesfound', handleRoutesFound)
                 .addTo(mymap);
         }
 
+        function handleRoutesFound(e) {
+            let routes = e.routes;
+            let firstRoute = routes[0];
+            processRoute(firstRoute);
+        }
+
+        function processRoute(firstRoute) {
+            if (_data != null) {
+                console.log('Data:', "Data is available");
+                processWithWorker(firstRoute);
+            } else {
+                setTimeout(() => processRoute(firstRoute), 1000);
+            }
+        }
+
+        function processWithWorker(firstRoute) {
+            if (window.Worker) {
+                const myWorker = new Worker("worker.js");
+                myWorker.onmessage = (e) => handleWorkerMessage(e, firstRoute);
+                myWorker.postMessage({ data: _data, firstRoute });
+            } else {
+                console.log('Your browser doesn\'t support web workers.');
+            }
+        }
+
+        function handleWorkerMessage(e, firstRoute) {
+            console.log('Message received from worker', e.data);
+            updateTrainMarker(e.data, firstRoute);
+        }
+
+        function updateTrainMarker(txtCoor, firstRoute) {
+            firstRoute.coordinates.forEach(function (coordinate, index) {
+                setTimeout(function () {
+                    let txt = txtCoor[index];
+                    console.log('text:', txt.txt, 'lat:', txt.latLng.lat, 'lon:', txt.latLng.lng, 'coor', coordinate);
+                    trainMarker.bindPopup(txt.txt).openPopup();
+                    trainMarker.setLatLng(coordinate);
+                }, 1000 * index);
+            });
+        }
+
         function waitForUserLocation() {
-            if (userTrainLat != null && userTrainLon != null && _data != null) {
+            if (userTrainLat != null && userTrainLon != null) {
                 console.log('User location is available');
-                let trainMarker = createTrainMarker(userTrainLat, userTrainLon);
-                createRoutingControl(userTrainLat, userTrainLon, trainLat, trainLon, trainMarker);
+                // Initialize the map
+                initializeMap(7.8731, 80.7718, 8); // Coordinates for Sri Lanka
+                trainMarker = createTrainMarker(userTrainLat, userTrainLon);
+                createRoutingControl(userTrainLat, userTrainLon, trainLat, trainLon);
                 console.log('User trip is over');
             } else {
                 console.log('Waiting for user location...');
                 setTimeout(waitForUserLocation, 1000);
             }
         }
-
-        // Initialize the map
-        initializeMap(7.8731, 80.7718, 8); // Coordinates for Sri Lanka
 
         // Get user location
         getUserLocation();
