@@ -55,7 +55,9 @@ self.onmessage = async function (event) {
         nearestRailwayTrack = railwayTrack;
       }
 
-      let txt = `<b>Train Location</b><br>Latitude: ${trainLat}<br>Longitude: ${trainLon}<br>`;
+      let txt = `<b>Train Location</b><br>Latitude: ${trainLat}<br>Longitude: ${trainLon}<br>Distance from Railway Track: ${distance.toFixed(
+        2
+      )}<br>`;
 
       if (nearestRailwayTrack != null) {
         txt += nearestRailwayTrack.tags?.name
