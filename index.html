@@ -71,6 +71,8 @@ out skel qt;
 -->
 
     <script type="module">
+        import trainImage from './train.png';
+
         let mymap;
         let userTrainLat = null;
         let userTrainLon = null;
@@ -111,7 +113,7 @@ out skel qt;
 
         function createTrainMarker(lat, lon) {
             let trainIcon = L.icon({
-                iconUrl: 'train.png', // URL to the train icon image
+                iconUrl: trainImage, // URL to the train icon image
                 iconSize: [32, 37], // size of the icon
                 iconAnchor: [16, 37], // point of the icon which will correspond to marker's location
                 popupAnchor: [0, -28] // point from which the popup should open relative to the iconAnchor
