@@ -54,8 +54,8 @@ map_to_area->.adminArea;
 
 (
 // Fetch nodes and ways tagged as railway stations within the administrative area
-node["railway"="station"](area.adminArea);
-way["railway"="station"](area.adminArea);
+//--// node["railway"="station"](area.adminArea);
+//--// way["railway"="station"](area.adminArea);
 
 // Fetch ways tagged as railway tracks within the administrative area
 way["railway"="rail"](area.adminArea);
@@ -89,7 +89,7 @@ out skel qt;
             }).addTo(mymap);
 
             let opl = new L.OverPassLayer({
-                'query': `is_in(${userTrainLat}, ${userTrainLon})->.n;rel(pivot.n)["boundary"="administrative"]["admin_level"="5"];map_to_area->.adminArea;(node["railway"="station"](area.adminArea);way["railway"="station"](area.adminArea);way["railway"="rail"](area.adminArea);node(w););out body;>;out skel qt;`,
+                'query': `is_in(${userTrainLat}, ${userTrainLon})->.n;rel(pivot.n)["boundary"="administrative"]["admin_level"="5"];map_to_area->.adminArea;(way["railway"="rail"](area.adminArea);node(w););out body;>;out skel qt;`,
                 'onSuccess': function (data) {
                     console.log('Data loaded:');//, data);
                     _data = data;
