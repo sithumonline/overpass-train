@@ -51,6 +51,7 @@ self.onmessage = async function (event) {
     );
     const nearDistance = findNearestDistance(nearTrack, trainLat, trainLon);
 
+    /*
     let nearestRailwayTrack = findNearestRailwayTrack(
       railwayTracks,
       trainLat,
@@ -65,6 +66,12 @@ self.onmessage = async function (event) {
       "nearDistance",
       nearDistance
     );
+    */
+
+    let nearestRailwayTrack = {
+      distance: nearDistance,
+      track: nearTrack,
+    };
 
     let txt = `<b>Train Location</b><br>Latitude: ${trainLat}<br>Longitude: ${trainLon}<br>Distance : ${nearestRailwayTrack.distance.toFixed(
       6
@@ -89,6 +96,7 @@ self.onmessage = async function (event) {
   self.postMessage(txtCoor);
 };
 
+/*
 function findNearestRailwayTrack(railwayTracks, trainLat, trainLon) {
   let distanceFromRailwayTrack = Number.MAX_VALUE;
   let nearestRailwayTrack = null;
@@ -103,6 +111,7 @@ function findNearestRailwayTrack(railwayTracks, trainLat, trainLon) {
 
   return { distance: distanceFromRailwayTrack, track: nearestRailwayTrack };
 }
+*/
 
 function findNearestDistance(railwayTrack, trainLat, trainLon) {
   let distance = Number.MAX_VALUE;
