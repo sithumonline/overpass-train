@@ -14,11 +14,22 @@
 </head>
 
 <body>
+    <!--- user can choose test mode or real time mode -->
+    <!--- real time mode will get the user location and update the train location in real time -->
+    <div id="mode">
+        <input type="radio" id="test" name="mode" value="test">
+        <label for="test">Test Mode</label>
+        <input type="radio" id="realtime" name="mode" value="realtime">
+        <label for="realtime">Real Time Mode</label>
+    </div>
+
     <div id="mapid"></div>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
+    <!--    
     <script src="https://cdn.jsdelivr.net/npm/leaflet-overpass-layer@2.9.0/dist/OverPassLayer.bundle.min.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-overpass-layer@2.9.0/src/OverPassLayer.min.css">
+-->
 
     <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
@@ -88,16 +99,6 @@ out skel qt;
                 maxZoom: 19,
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(mymap);
-
-            let opl = new L.OverPassLayer({
-                'query': `is_in(${userTrainLat}, ${userTrainLon})->.n;rel(pivot.n)["boundary"="administrative"]["admin_level"="5"];map_to_area->.adminArea;(way["railway"="rail"](area.adminArea);node(w););out body;>;out skel qt;`,
-                'onSuccess': function (data) {
-                    console.log('Data loaded:');//, data);
-                    showLogs('Data loaded');
-                    _data = data;
-                },
-            });
-            mymap.addLayer(opl);
         }
 
         function getUserLocation() {
@@ -122,10 +123,8 @@ out skel qt;
                 popupAnchor: [0, -28] // point from which the popup should open relative to the iconAnchor
             });
 
-            let trainMarker = L.marker([lat, lon], { icon: trainIcon }).addTo(mymap);
+            trainMarker = L.marker([lat, lon], { icon: trainIcon }).addTo(mymap);
             trainMarker.bindPopup(`<b>Train Location</b><br>Latitude: ${lat}<br>Longitude: ${lon}`).openPopup();
-
-            return trainMarker;
         }
 
         function createRoutingControl(userLat, userLon, trainLat, trainLon) {
@@ -182,13 +181,23 @@ out skel qt;
             });
         }
 
-        function waitForUserLocation() {
-            if (userTrainLat != null && userTrainLon != null) {
+        async function waitForUserLocation() {
+            if (userTrainLat != null && userTrainLon != null && isModeSelected()) {
                 console.log('User location is available');
                 // Initialize the map
                 initializeMap(7.8731, 80.7718, 8); // Coordinates for Sri Lanka
-                trainMarker = createTrainMarker(userTrainLat, userTrainLon);
-                createRoutingControl(userTrainLat, userTrainLon, trainLat, trainLon);
+                if (!isRealTimeMode()) {
+                    createTrainMarker(userTrainLat, userTrainLon);
+                    createRoutingControl(userTrainLat, userTrainLon, trainLat, trainLon);
+                    _data = await getGeoData(userTrainLat, userTrainLon);
+                } else {
+                    setInterval(async () => {
+                        createTrainMarker(userTrainLat, userTrainLon);
+                        processRoute({ coordinates: [{ lat: userTrainLat, lng: userTrainLon }] })
+                        getUserLocation();
+                        _data = await getGeoData(userTrainLat, userTrainLon);
+                    }, 5000);
+                }
                 console.log('User trip is over');
             } else {
                 console.log('Waiting for user location...');
@@ -199,6 +208,27 @@ out skel qt;
         function showLogs(logs) {
             let logsDiv = document.getElementById('logs');
             logsDiv.innerHTML = logsDiv.innerHTML + '<br>' + logs;
+        }
+
+        function isRealTimeMode() {
+            return document.getElementById('realtime').checked;
+        }
+
+        function isModeSelected() {
+            const chk = document.getElementById('test').checked || document.getElementById('realtime').checked;
+            if (!chk) {
+                showLogs('Please select a mode');
+            }
+            return chk;
+        }
+
+        async function getGeoData(lat, lon) {
+            const baseUrl = 'https://overpass-api.de/api/interpreter?data=';
+            const query = `[out:json][timeout:25];is_in(${lat}, ${lon})->.n;rel(pivot.n)["boundary"="administrative"]["admin_level"="5"];map_to_area->.adminArea;(way["railway"="rail"](area.adminArea);node(w););out body;>;out skel qt;`;
+            const url = baseUrl + encodeURIComponent(query);
+            const response = await fetch(url);
+            const data = await response.json();
+            return data;
         }
 
         // Get user location
