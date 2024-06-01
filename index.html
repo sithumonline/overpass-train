@@ -116,6 +116,10 @@ out skel qt;
         }
 
         function createTrainMarker(lat, lon) {
+            if (trainMarker != null) {
+                return
+            }
+
             let trainIcon = L.icon({
                 iconUrl: trainImage, // URL to the train icon image
                 iconSize: [32, 37], // size of the icon
