@@ -46,19 +46,16 @@
         </div>
         <a href="https://github.com/sithumonline/overpass-train" target="_blank">GitHub</a>
     </div>
-    <script>
+    <script type="module">
+        import data from './train-data.json';
         // read train-data.json and add options to the select
-        fetch('train-data.json')
-            .then(response => response.json())
-            .then(data => {
-                const select = document.getElementById('trains');
-                data.forEach(train => {
-                    const option = document.createElement('option');
-                    option.value = train.trainNumber.toLowerCase().replace(' ', '_');
-                    option.text = train.trainNumber;
-                    select.appendChild(option);
-                });
-            });
+        const select = document.getElementById('trains');
+        data.forEach(train => {
+            const option = document.createElement('option');
+            option.value = train.trainNumber.toLowerCase().replace(' ', '_');
+            option.text = train.trainNumber;
+            select.appendChild(option);
+        });
     </script>
 
     <div id="mapid" style="
