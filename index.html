@@ -272,6 +272,32 @@ out skel qt;
             return data;
         }
 
+        async function getDeviceId() {
+            let deviceId = null;
+
+            if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                devices.forEach(device => {
+                    if (!device.deviceId) {
+                        return;
+                    }
+                    deviceId += device.deviceId;
+                });
+            }
+
+            if (window.localStorage && deviceId == null) {
+                deviceId = localStorage.getItem('deviceId');
+                if (deviceId == null) {
+                    deviceId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+                    localStorage.setItem('deviceId', deviceId);
+                }
+            }
+
+            showLogs('Device ID: ' + deviceId);
+        }
+
+        getDeviceId();
+
         // Get user location
         getUserLocation();
 
