@@ -16,14 +16,53 @@
 <body>
     <!--- user can choose test mode or real time mode -->
     <!--- real time mode will get the user location and update the train location in real time -->
-    <div id="mode">
-        <input type="radio" id="test" name="mode" value="test">
-        <label for="test">Test Mode</label>
-        <input type="radio" id="realtime" name="mode" value="realtime">
-        <label for="realtime">Real Time Mode</label>
+    <div style="
+        position: sticky;
+        top: 0;
+        left: 0;
+        padding: 10px;
+        background-color: #fff;
+        z-index: 1000;
+        border-radius: 5px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        color: #333;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        ">
+        <div id="mode">
+            <input type="radio" id="test" name="mode" value="test">
+            <label for="test">Test Mode</label>
+            <input type="radio" id="realtime" name="mode" value="realtime">
+            <label for="realtime">Real Time Mode</label>
+        </div>
+        <select id="trains"></select>
+        <a href="https://github.com/sithumonline/overpass-train" target="_blank">GitHub</a>
     </div>
+    <script>
+        // read train-data.json and add options to the select
+        fetch('train-data.json')
+            .then(response => response.json())
+            .then(data => {
+                const select = document.getElementById('trains');
+                data.forEach(train => {
+                    const option = document.createElement('option');
+                    option.value = train.trainNumber.toLowerCase().replace(' ', '_');
+                    option.text = train.trainNumber;
+                    select.appendChild(option);
+                });
+            });
+    </script>
 
-    <div id="mapid"></div>
+    <div id="mapid" style="
+    position: relative;
+    margin-top: 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    "></div>
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/leaflet-overpass-layer@2.9.0/dist/OverPassLayer.bundle.min.js"></script>
