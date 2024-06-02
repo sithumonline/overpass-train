@@ -52,7 +52,7 @@
         const select = document.getElementById('trains');
         data.forEach(train => {
             const option = document.createElement('option');
-            option.value = train.trainNumber.toLowerCase().replace(' ', '_');
+            option.value = train.trainNumber.toUpperCase().replace(/\s/g, "_");
             option.text = train.trainNumber;
             select.appendChild(option);
         });
