@@ -282,6 +282,11 @@ out skel qt;
             const query = `[out:json][timeout:25];is_in(${lat}, ${lon})->.n;rel(pivot.n)["boundary"="administrative"]["admin_level"="5"];map_to_area->.adminArea;(way["railway"="rail"](area.adminArea);node(w););out body;>;out skel qt;`;
             const url = baseUrl + encodeURIComponent(query);
             const response = await fetch(url);
+            if (!response.ok) {
+                console.error('Error fetching geo data:', response.statusText);
+                showLogs('Error fetching geo data: ' + response.statusText);
+                return null;
+            }
             const data = await response.json();
             return data;
         }
