@@ -40,6 +40,10 @@
             <label for="realtime">Real Time Mode</label>
         </div>
         <select id="trains"></select>
+        <div>
+            <label>Send</label>
+            <input id="send-data" type="checkbox">
+        </div>
         <a href="https://github.com/sithumonline/overpass-train" target="_blank">GitHub</a>
     </div>
     <script>
@@ -294,6 +298,11 @@ out skel qt;
             }
 
             showLogs('Device ID: ' + deviceId);
+            return deviceId;
+        }
+
+        function sendData() {
+            return document.getElementById('send-data').checked;
         }
 
         getDeviceId();
