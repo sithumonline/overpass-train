@@ -18,6 +18,8 @@ jobs:
     defaults:
       run:
         working-directory: ./frontend
+    env:
+      VITE_BACKEND_URL: ${{ secrets.VITE_BACKEND_URL }}
 
     steps:
       - name: Checkout
