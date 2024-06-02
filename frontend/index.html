@@ -129,6 +129,8 @@ out skel qt;
         let trainLon = 79.8612; // Example longitude
         let _data = null;
         let trainMarker = null;
+        let distance = 0;
+        let deviceId = null;
 
         function initializeMap(lat, lon, zoom) {
             mymap = L.map('mapid').setView([lat, lon], zoom);
@@ -209,6 +211,7 @@ out skel qt;
         function handleWorkerMessage(e, firstRoute) {
             console.log('Message received from worker', e.data);
             showLogs('Message received from worker');
+            distance = e.data[0]?.distance;
             updateTrainMarker(e.data, firstRoute);
         }
 
@@ -238,6 +241,16 @@ out skel qt;
                         processRoute({ coordinates: [{ lat: userTrainLat, lng: userTrainLon }] })
                         getUserLocation();
                         _data = await getGeoData(userTrainLat, userTrainLon);
+                        if (sendData()) {
+                            await sendDataToServer({
+                                deviceId: await getDeviceId(),
+                                trainId: document.getElementById('trains').value,
+                                latitude: userTrainLat,
+                                longitude: userTrainLon,
+                                timestamp: new Date().toISOString(),
+                                distance: distance,
+                            });
+                        }
                     }, 5000);
                 }
                 console.log('User trip is over');
@@ -274,7 +287,9 @@ out skel qt;
         }
 
         async function getDeviceId() {
-            let deviceId = null;
+            if (deviceId != null) {
+                return deviceId;
+            }
 
             if (navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
                 const devices = await navigator.mediaDevices.enumerateDevices();
@@ -302,7 +317,26 @@ out skel qt;
             return document.getElementById('send-data').checked;
         }
 
-        getDeviceId();
+        async function sendDataToServer(data) {
+            const baseUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3000';
+            const url = baseUrl + '/api/v1/trains';
+
+            const response = await fetch(url, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                console.log('Data sent successfully');
+                showLogs('Data sent successfully');
+            } else {
+                console.error('Error sending data:', response.statusText);
+                showLogs('Error sending data: ' + response.statusText);
+            }
+        }
 
         // Get user location
         getUserLocation();

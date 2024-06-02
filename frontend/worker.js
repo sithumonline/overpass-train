@@ -86,6 +86,7 @@ self.onmessage = async function (event) {
     txtCoor.push({
       latLng: { lat: trainLat, lng: trainLon },
       txt: txt,
+      distance: nearestRailwayTrack.distance,
     });
 
     console.log("firstRoute ended", index);
