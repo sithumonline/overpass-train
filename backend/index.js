@@ -17,6 +17,7 @@ const trainSchema = joi.object({
   latitude: joi.number().required(),
   longitude: joi.number().required(),
   distance: joi.number().required(),
+  angle: joi.number().required(),
 });
 
 try {
@@ -37,6 +38,7 @@ const Train = mongoose.model("Train", {
   deviceId: String,
   timestamp: Date,
   distance: Number,
+  angle: Number,
   location: {
     type: {
       type: String,
@@ -81,13 +83,14 @@ serviceRouter.post("/trains", async (req, res) => {
     return res.status(400).json({ message: error.message });
   }
 
-  const { trainId, deviceId, timestamp, latitude, longitude, distance } =
+  const { trainId, deviceId, timestamp, latitude, longitude, distance, angle } =
     req.body;
   const train = new Train({
     trainId,
     deviceId,
     timestamp,
     distance,
+    angle,
     location: {
       type: "Point",
       coordinates: [longitude, latitude],

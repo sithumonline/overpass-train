@@ -121,6 +121,7 @@ out skel qt;
 
     <script type="module">
         import trainImage from './train.png';
+        import personImage from './person.png';
 
         let mymap;
         let userTrainLat = null;
@@ -131,6 +132,9 @@ out skel qt;
         let trainMarker = null;
         let distance = 0;
         let deviceId = null;
+        let nearRailMarker = null;
+        let coordinates = [];
+        let angle = 0;
 
         function initializeMap(lat, lon, zoom) {
             mymap = L.map('mapid').setView([lat, lon], zoom);
@@ -145,11 +149,13 @@ out skel qt;
             navigator.geolocation.getCurrentPosition(function (position) {
                 userTrainLat = position.coords.latitude;
                 userTrainLon = position.coords.longitude;
+                pushCoordinate(userTrainLat, userTrainLon);
                 console.log(`Latitude: ${userTrainLat} Longitude: ${userTrainLon}`)
                 showLogs(`Latitude: ${userTrainLat} Longitude: ${userTrainLon}`);
             }, function (error) {
                 userTrainLat = 6.7478626;
                 userTrainLon = 79.9033469;
+                pushCoordinate(userTrainLat, userTrainLon);
                 console.error('Error getting geolocation:', error);
                 showLogs(`Error getting geolocation: ${error}`);
             });
@@ -161,7 +167,7 @@ out skel qt;
             }
 
             let trainIcon = L.icon({
-                iconUrl: trainImage, // URL to the train icon image
+                iconUrl: personImage, // URL to the train icon image
                 iconSize: [32, 37], // size of the icon
                 iconAnchor: [16, 37], // point of the icon which will correspond to marker's location
                 popupAnchor: [0, -28] // point from which the popup should open relative to the iconAnchor
@@ -169,6 +175,16 @@ out skel qt;
 
             trainMarker = L.marker([lat, lon], { icon: trainIcon }).addTo(mymap);
             trainMarker.bindPopup(`<b>Train Location</b><br>Latitude: ${lat}<br>Longitude: ${lon}`).openPopup();
+
+            let personIcon = L.icon({
+                iconUrl: trainImage, // URL to the person icon image
+                iconSize: [32, 37], // size of the icon
+                iconAnchor: [16, 37], // point of the icon which will correspond to marker's location
+                popupAnchor: [0, -28] // point from which the popup should open relative to the iconAnchor
+            });
+
+            nearRailMarker = L.marker([lat, lon], { icon: personIcon }).addTo(mymap);
+            nearRailMarker.bindPopup(`<b>Train Location</b><br>Latitude: ${lat}<br>Longitude: ${lon}`).openPopup();
         }
 
         function createRoutingControl(userLat, userLon, trainLat, trainLon) {
@@ -199,7 +215,7 @@ out skel qt;
 
         function processWithWorker(firstRoute) {
             if (window.Worker) {
-                const myWorker = new Worker(new URL('./worker.js', import.meta.url), { type: 'module' });
+                const myWorker = new Worker(new URL('./worker2.js', import.meta.url), { type: 'module' });
                 myWorker.onmessage = (e) => handleWorkerMessage(e, firstRoute);
                 myWorker.postMessage({ data: _data, firstRoute });
             } else {
@@ -209,9 +225,8 @@ out skel qt;
         }
 
         function handleWorkerMessage(e, firstRoute) {
-            console.log('Message received from worker', e.data);
-            showLogs('Message received from worker');
             distance = e.data[0]?.distance;
+            angle = e.data[0]?.angle;
             updateTrainMarker(e.data, firstRoute);
         }
 
@@ -219,9 +234,15 @@ out skel qt;
             firstRoute.coordinates.forEach(function (coordinate, index) {
                 setTimeout(function () {
                     let txt = txtCoor[index];
-                    console.log('text:', txt.txt, 'lat:', txt.latLng.lat, 'lon:', txt.latLng.lng, 'coor', coordinate);
+                    if (txt == null) {
+                        return;
+                    }
+
                     trainMarker.bindPopup(txt.txt).openPopup();
                     trainMarker.setLatLng(coordinate);
+
+                    nearRailMarker.bindPopup(`<b>Near Rail Location</b><br>Latitude: ${txt.coordinate.lat}<br>Longitude: ${txt.coordinate.lng}<br>Distance: ${txt.distance}<br>Angle: ${txt.angle}`).openPopup();
+                    nearRailMarker.setLatLng(txt.coordinate);
                 }, 1000 * index);
             });
         }
@@ -238,7 +259,7 @@ out skel qt;
                 } else {
                     setInterval(async () => {
                         createTrainMarker(userTrainLat, userTrainLon);
-                        processRoute({ coordinates: [{ lat: userTrainLat, lng: userTrainLon }] })
+                        processRoute({ coordinates: coordinates.reverse() });
                         getUserLocation();
                         _data = await getGeoData(userTrainLat, userTrainLon);
                         if (sendData()) {
@@ -249,6 +270,7 @@ out skel qt;
                                 longitude: userTrainLon,
                                 timestamp: new Date().toISOString(),
                                 distance: distance,
+                                angle: angle
                             });
                         }
                     }, 5000);
@@ -341,6 +363,15 @@ out skel qt;
                 console.error('Error sending data:', response.statusText);
                 showLogs('Error sending data: ' + response.statusText);
             }
+        }
+
+        function pushCoordinate(lat, lng) {
+            // keep only the last 10 coordinates
+            if (coordinates.length > 10) {
+                coordinates.shift();
+            }
+
+            coordinates.push({ lat, lng });
         }
 
         // Get user location
