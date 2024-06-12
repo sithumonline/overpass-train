@@ -25,31 +25,36 @@ self.onmessage = async function (event) {
     let trainLat = coordinate.lat;
     let trainLon = coordinate.lng;
 
-    if (
-      index + 1 >= firstRoute.coordinates.length ||
-      trainLat == null ||
-      trainLon == null
-    ) {
-      continue;
-    }
+    // if (
+    //   index + 1 >= firstRoute.coordinates.length ||
+    //   trainLat == null ||
+    //   trainLon == null
+    // ) {
+    //   continue;
+    // }
 
-    let trainDirection = calculateBearing(
-      trainLat,
-      trainLon,
-      firstRoute.coordinates[index + 1].lat,
-      firstRoute.coordinates[index + 1].lng
-    );
+    // let trainDirection = calculateBearing(
+    //   trainLat,
+    //   trainLon,
+    //   firstRoute.coordinates[index + 1].lat,
+    //   firstRoute.coordinates[index + 1].lng
+    // );
 
     console.log(
       "firstRoute started",
       `${firstRoute.coordinates.length} / ${index}`
     );
 
+    // let nearestRailwayTrack = findNearestRailwayTrack(
+    //   railwayTracks,
+    //   trainLat,
+    //   trainLon,
+    //   trainDirection
+    // );
     let nearestRailwayTrack = findNearestRailwayTrack(
       railwayTracks,
       trainLat,
-      trainLon,
-      trainDirection
+      trainLon
     );
 
     let txt = `<b>Train Location</b><br>Latitude: ${trainLat}<br>Longitude: ${trainLon}<br>Distance : ${nearestRailwayTrack.distance.toFixed(
@@ -81,23 +86,29 @@ self.onmessage = async function (event) {
   self.postMessage(txtCoor);
 };
 
-function findNearestRailwayTrack(
-  railwayTracks,
-  trainLat,
-  trainLon,
-  trainDirection
-) {
+// function findNearestRailwayTrack(
+//   railwayTracks,
+//   trainLat,
+//   trainLon,
+//   trainDirection
+// ) {
+function findNearestRailwayTrack(railwayTracks, trainLat, trainLon) {
   let distanceFromRailwayTrack = Number.MAX_VALUE;
   let nearestRailwayTrack = null;
   let nearestRailwayCoordinate = null;
   let nearestRailwayAngle = null;
 
   for (let railwayTrack of railwayTracks) {
-    let distance = findNearestDistance(
+    // let distance = findNearestDistance(
+    //   railwayTrack,
+    //   trainLat,
+    //   trainLon,
+    //   trainDirection
+    // );
+    let distance = findSecondNearestNodeCoordinates(
       railwayTrack,
       trainLat,
-      trainLon,
-      trainDirection
+      trainLon
     );
     if (distance.distance < distanceFromRailwayTrack) {
       distanceFromRailwayTrack = distance.distance;
@@ -115,6 +126,7 @@ function findNearestRailwayTrack(
   };
 }
 
+/*
 function findNearestDistance(railwayTrack, trainLat, trainLon, trainDirection) {
   let distance = Number.MAX_VALUE;
   let coordinate = null;
@@ -201,4 +213,76 @@ function calculateBearing(lat1, lon1, lat2, lon2) {
   let θ = Math.atan2(y, x);
 
   return (toDeg(θ) + 360) % 360; // Normalize to 0-360 degrees
+}
+*/
+
+function findSecondNearestNodeCoordinates(railwayTrack, trainLat, trainLon) {
+  let nearestDistance = Number.MAX_VALUE;
+  let secondNearestDistance = Number.MAX_VALUE;
+  let nearestCoordinate = null;
+  let secondNearestCoordinate = null;
+
+  for (let i = 0; i < railwayTrack.nodes.length; i++) {
+    let node = railwayTrack.nodes[i];
+    let lat = node.lat;
+    let lon = node.lon;
+
+    if (lat == null || lon == null) {
+      continue;
+    }
+
+    let distance = haversine(
+      { lat: trainLat, lon: trainLon },
+      { lat: lat, lon: lon }
+    );
+
+    if (distance < nearestDistance) {
+      // Update second nearest to be the previous nearest
+      secondNearestDistance = nearestDistance;
+      secondNearestCoordinate = nearestCoordinate;
+
+      // Update nearest
+      nearestDistance = distance;
+      nearestCoordinate = { lat: lat, lng: lon };
+    } else if (distance < secondNearestDistance) {
+      // Update second nearest
+      secondNearestDistance = distance;
+      secondNearestCoordinate = { lat: lat, lng: lon };
+    }
+  }
+
+  let angle = calculateAngle(nearestCoordinate, {
+    lat: trainLat,
+    lng: trainLon,
+  });
+
+  return { distance: nearestDistance, coordinate: nearestCoordinate, angle };
+  //   return {
+  //     nearestDistance,
+  //     nearestCoordinate,
+  //     secondNearestDistance,
+  //     secondNearestCoordinate,
+  //     angle,
+  //   };
+}
+
+// Function to calculate the bearing (angle) from coordinate1 to coordinate2
+function calculateAngle(coord1, coord2) {
+  let lat1 = (coord1.lat * Math.PI) / 180;
+  let lon1 = (coord1.lng * Math.PI) / 180;
+  let lat2 = (coord2.lat * Math.PI) / 180;
+  let lon2 = (coord2.lng * Math.PI) / 180;
+
+  let dLon = lon2 - lon1;
+
+  let y = Math.sin(dLon) * Math.cos(lat2);
+  let x =
+    Math.cos(lat1) * Math.sin(lat2) -
+    Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLon);
+
+  let brng = Math.atan2(y, x);
+  brng = (brng * 180) / Math.PI;
+  brng = (brng + 360) % 360;
+
+  return brng;
 }
