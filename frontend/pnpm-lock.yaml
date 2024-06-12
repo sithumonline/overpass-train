@@ -11,6 +11,9 @@ dependencies:
   haversine-distance:
     specifier: ^1.2.1
     version: 1.2.1
+  kalmanjs:
+    specifier: ^1.1.0
+    version: 1.1.0
   kdbush:
     specifier: ^4.0.2
     version: 4.0.2
@@ -408,6 +411,10 @@ packages:
 
   /haversine-distance@1.2.1:
     resolution: {integrity: sha512-rQpG89d6NlAis0eqOSFXDqNU/GZcMPlHNVMqTSzD16niD9s1fDK8T6kwrK0WJ7OMU+iRNy3cgGYnNQihMqmaHg==}
+    dev: false
+
+  /kalmanjs@1.1.0:
+    resolution: {integrity: sha512-Gkm2DAKIX8geuDcEJ92e80EmQ6TyIzWBJk6AFk+aDLofQ4G/KoDe1RCY9WMuXFe0NQxsTi7HYh9BVQneOtlvkg==}
     dev: false
 
   /kdbush@4.0.2:

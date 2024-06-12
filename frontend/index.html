@@ -122,6 +122,9 @@ out skel qt;
     <script type="module">
         import trainImage from './train.png';
         import personImage from './person.png';
+        import KalmanFilter from 'kalmanjs';
+
+        const kalmanFilter = new KalmanFilter();
 
         let mymap;
         let userTrainLat = null;
@@ -158,6 +161,10 @@ out skel qt;
                 pushCoordinate(userTrainLat, userTrainLon);
                 console.error('Error getting geolocation:', error);
                 showLogs(`Error getting geolocation: ${error}`);
+            }, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
             });
         }
 
@@ -381,7 +388,7 @@ out skel qt;
                 coordinates.shift();
             }
 
-            coordinates.push({ lat, lng });
+            coordinates.push({ lat: kalmanFilter.filter(lat), lng: kalmanFilter.filter(lng) })
         }
 
         // Get user location
