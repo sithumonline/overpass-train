@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "visualization"
+version = "0.1.0"
+description = ""
+authors = ["Sithum Bopitiya <sithumsandeepap@gmail.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pymongo = "^4.8.0"
+matplotlib = "^3.9.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+visualize = "visualization.visualization:main"
