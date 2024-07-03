@@ -17,14 +17,19 @@ def get_data(query=None):
 
 def plot_data(data):
     x = []
-    y1 = []
-    y2 = []
+    y = []
+    lat1 = 0
+    lon1 = 0
     for d in data:
+        lon2, lat2 = d['location']['coordinates']
+        if lat1 == 0 and lon1 == 0:
+            lat1, lon1 = lat2, lon2
+            continue
         x.append(d['timestamp'])
-        y1.append(d['distance'])
-        y2.append(d['angle'])
-    plt.plot(x, y1, label='distance')
-    plt.plot(x, y2, label='angle')
+        y.append((lat2 - lat1)**2 + (lon2 - lon1)**2)
+        lat1, lon1 = lat2, lon2
+
+    plt.plot(x, y)
     plt.show()
 
 def main():
