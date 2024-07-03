@@ -1,4 +1,5 @@
 import os
+import math
 from datetime import datetime
 from pymongo import MongoClient
 import matplotlib.pyplot as plt
@@ -26,7 +27,7 @@ def plot_data(data):
             lat1, lon1 = lat2, lon2
             continue
         x.append(d['timestamp'])
-        y.append((lat2 - lat1)**2 + (lon2 - lon1)**2)
+        y.append(math.sqrt((lat2 - lat1)**2 + (lon2 - lon1)**2))
         lat1, lon1 = lat2, lon2
 
     plt.plot(x, y)
