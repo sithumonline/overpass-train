@@ -3,6 +3,7 @@ import math
 from datetime import datetime
 from pymongo import MongoClient
 import matplotlib.pyplot as plt
+import plotly.express as px
 
 
 def get_data(query=None):
@@ -33,7 +34,21 @@ def plot_data(data):
     plt.plot(x, y)
     plt.show()
 
+
+def plot_data_plotly(data):
+    # show longitude and latitude on a map
+    lon = []
+    lat = []
+    for d in data:
+        lon.append(d['location']['coordinates'][0])
+        lat.append(d['location']['coordinates'][1])
+
+    fig = px.scatter_mapbox(lat=lat, lon=lon, zoom=10)
+    fig.update_layout(mapbox_style="open-street-map")
+    fig.show()
+
 def main():
     data = get_data({'timestamp': {'$gte': datetime(2024, 7, 1)}})
-    plot_data(data)
+    # plot_data(data)
+    plot_data_plotly(data)
 

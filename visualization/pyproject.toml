@@ -8,6 +8,8 @@ authors = ["Sithum Bopitiya <sithumsandeepap@gmail.com>"]
 python = "^3.10"
 pymongo = "^4.8.0"
 matplotlib = "^3.9.0"
+plotly = "^5.22.0"
+pandas = "^2.2.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
